@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Worker Dashboard</title>
+
+    <style>
+          body {
+        margin: 0;
+        background: #f1f8e9;
+    }
+
+    /* MENU STYLES */
+    .menu-icon {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .menu {
+        position: absolute;
+        top: 60px;
+        right: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        display: none;
+        width: 160px;
+    }
+
+    .logout-link {
+        color: #c62828;
+        font-weight: bold;
+    }
+
+    .logout-link:hover {
+        background-color: #fdecea;
+    }
+        body {
+            margin: 0;
+            height: 100vh;
+            background: linear-gradient(to bottom, #c8e6c9, #f1f8e9);
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+
+        /* Hamburger menu */
+       .menu-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+        .menu {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none;
+            width: 160px;
+            overflow: hidden;
+        }
+
+        .menu a, .menu button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            text-align: left;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .menu a:hover,
+        .menu button:hover {
+            background-color: #e8f5e9;
+        }
+
+        /* Center card */
+        .card {
+            background: white;
+            width: 360px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        h1 {
+            color: #1b5e20;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1b5e20;
+        }
+    </style>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById("menu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+    </script>
+</head>
+
+<body>
+
+<!-- Hamburger icon -->
+<div class="menu-icon" onclick="toggleMenu()">≡ Menu</div>
+
+<!-- Dropdown menu -->
+<div class="menu" id="menu">
+    <a href="#">Profile</a>
+    <a href="#">Settings</a>
+
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+</div>
+
+<!-- Main content -->
+<div class="card">
+    <h1>Worker Dashboard</h1>
+    <p>Welcome, <strong>{{ request.user.username }}</strong></p>
+
+    <form method="post">
+        {% csrf_token %}
+        <select name="ward" required>
+            <option value="">-- Select Ward --</option>
+            <option value="Ward 1">Ward 1</option>
+            <option value="Ward 2">Ward 2</option>
+            <option value="Ward 3">Ward 3</option>
+        </select>
+
+        <button type="submit">Proceed</button>
+    </form>
+</div>
+
+</body>
+</html>

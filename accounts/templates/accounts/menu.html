@@ -1,0 +1,18 @@
+<!-- Hamburger Icon -->
+<div class="menu-icon" onclick="toggleMenu()">☰</div>
+
+<!-- Dropdown Menu -->
+<div class="menu" id="menu">
+    <a href="#">Profile</a>
+    <a href="#">Settings</a>
+
+    <div class="divider"></div>
+
+    <a href="#" class="logout-link" onclick="document.getElementById('logoutForm').submit();">
+        Logout
+    </a>
+
+    <form id="logoutForm" method="post" action="{% url 'logout' %}" style="display:none;">
+        {% csrf_token %}
+    </form>
+</div>

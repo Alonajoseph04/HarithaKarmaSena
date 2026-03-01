@@ -1,10 +1,12 @@
+
+from waste.models import Collection
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.contrib.auth.models import Group
-
+from django.utils.timezone import now
 
 def login_page(request):
     if request.method == "POST":
@@ -16,28 +18,87 @@ def login_page(request):
         if user is not None:
             login(request, user)
 
-            # Redirect ONLY workers
-            if user.groups.filter(name="Worker").exists():
+            # Role-based redirection
+            if user.is_superuser:
+                return redirect("/admin/")
+
+            elif user.groups.filter(name="Worker").exists():
                 return redirect("worker_dashboard")
+
+            elif user.groups.filter(name="Household").exists():
+                return redirect("household_dashboard")
+
             else:
-                messages.error(request, "User is not assigned as Worker")
+                messages.error(request, "User role not assigned.")
+                return redirect("login")
 
         else:
             messages.error(request, "Invalid username or password")
 
     return render(request, "accounts/login.html")
-
 @login_required
 def worker_dashboard(request):
     if not request.user.groups.filter(name="Worker").exists():
         return HttpResponseForbidden("Access denied")
 
-    if request.method == "POST":
+    house_data = {
+        "Ward 1": {"houses": 100, "amount": 500},
+        "Ward 2": {"houses": 80, "amount": 400},
+        "Ward 3": {"houses": 120, "amount": 600},
+    }
+
+    # If ward selected from dropdown
+    if request.method == "POST" and request.POST.get("ward"):
         selected_ward = request.POST.get("ward")
         request.session["ward"] = selected_ward
-        return redirect("ward_summary")  # 🔑 AUTO REDIRECT
+        return redirect("worker_dashboard")
+
+    # If change ward button pressed
+    if request.method == "POST" and request.POST.get("ward") == "":
+        request.session.pop("ward", None)
+        return redirect("worker_dashboard")
+
+    selected_ward = request.session.get("ward")
+
+    if selected_ward:
+        today_key = f"collection_{selected_ward}_{now().date()}"
+        collected = request.session.get(today_key, [])
+
+        total_houses = house_data[selected_ward]["houses"]
+        total_amount = house_data[selected_ward]["amount"]
+
+        collected_count = Collection.objects.filter(
+        worker=request.user,
+        ward=selected_ward,
+        date=now().date()).count()
+        remaining_houses = total_houses - collected_count
+        progress_percent = (collected_count / total_houses) * 100 if total_houses > 0 else 0
+        per_house_amount = total_amount / total_houses
+        collected_amount = collected_count * per_house_amount
+        remaining_amount = total_amount - collected_amount
+        progress_percent = (collected_count / total_houses) * 100 if total_houses > 0 else 0
+
+        return render(request, "accounts/worker_dashboard.html", {
+            "selected_ward": selected_ward,
+            "total_houses": total_houses,
+            "remaining_houses": remaining_houses,
+            "collected_count": collected_count,
+            "total_amount": total_amount,
+            "collected_amount": collected_amount,
+            "remaining_amount": remaining_amount,
+            "progress_percent": progress_percent,
+            
+        })
 
     return render(request, "accounts/worker_dashboard.html")
+    
+@login_required
+def household_dashboard(request):
+    if not request.user.groups.filter(name="Household").exists():
+        return HttpResponseForbidden("Access denied")
+
+    return render(request, "accounts/household_dashboard.html")
+
 
 @login_required
 def ward_summary(request):
@@ -65,8 +126,46 @@ def ward_summary(request):
 
 @login_required
 def scan_qr(request):
-    return render(request, "accounts/scan.html")
+    if not request.user.groups.filter(name="Worker").exists():
+        return HttpResponseForbidden("Access denied")
 
+    selected_ward = request.session.get("ward")
+
+    if not selected_ward:
+        return redirect("worker_dashboard")
+
+    message = None
+
+    if request.method == "POST":
+        house_code = request.POST.get("house_code")
+
+        exists = Collection.objects.filter(
+            worker=request.user,
+            ward=selected_ward,
+            house_code=house_code,
+            date=now().date()
+        ).exists()
+
+        if exists:
+            message = "Already scanned today"
+        else:
+            Collection.objects.create(
+                worker=request.user,
+                ward=selected_ward,
+                house_code=house_code
+            )
+            message = "Collection recorded"
+
+    count = Collection.objects.filter(
+        worker=request.user,
+        ward=selected_ward,
+        date=now().date()
+    ).count()
+
+    return render(request, "accounts/scan.html", {
+        "message": message,
+        "count": count
+    })
 
 def logout_user(request):
     logout(request)

@@ -159,6 +159,8 @@
     <h1>Worker Dashboard</h1>
     <p>Welcome, <strong>{{ request.user.username }}</strong></p>
 
+    {% if not selected_ward %}
+    <!-- Ward Selection -->
     <form method="post">
         {% csrf_token %}
         <select name="ward" required>
@@ -170,6 +172,50 @@
 
         <button type="submit">Proceed</button>
     </form>
+    {% endif %}
+
+    {% if selected_ward %}
+        <hr>
+
+        <p><strong>Selected Ward:</strong> {{ selected_ward }}</p>
+
+        <p>Total Houses: {{ total_houses }}</p>
+        <p>Remaining Houses: {{ remaining_houses }}</p>
+        <p>Collected Houses: {{ collected_count }}</p>
+
+        <hr>
+
+        <p>Total Amount: ₹{{ total_amount }}</p>
+        <p>Collected Amount: ₹{{ collected_amount }}</p>
+        <p>Remaining Amount: ₹{{ remaining_amount }}</p>
+
+        <hr>
+
+        <p>Progress: {{ progress_percent|default:0|floatformat:1 }}%</p>
+
+        <div style="width:100%; background:#e0e0e0; border-radius:6px; height:18px;">
+            <div style="
+                width:{{ progress_percent }}%;
+                background:#2e7d32;
+                height:18px;
+                border-radius:6px;">
+            </div>
+        </div>
+        <hr>
+
+        <a href="{% url 'scan_qr' %}">
+            <button>Start Collection</button>
+        </a>
+
+        <br><br>
+
+        <form method="post">
+            {% csrf_token %}
+            <button name="ward" value="" style="background:#c62828;">
+                Change Ward
+            </button>
+        </form>
+    {% endif %}
 </div>
 
 </body>

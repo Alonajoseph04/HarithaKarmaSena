@@ -1,30 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Scan QR</title>
+    <title>Scan House</title>
     <style>
         body {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: linear-gradient(to bottom, #c8e6c9, #f1f8e9);
             font-family: Arial, sans-serif;
-            background: #f1f8e9;
         }
-        .box {
-            text-align: center;
-            padding: 40px;
+        .card {
+            width: 400px;
+            margin: 100px auto;
+            padding: 30px;
             background: white;
             border-radius: 10px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        h2 {
+            color: #1b5e20;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1b5e20;
+        }
+        .msg {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #2e7d32;
         }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>QR Scan</h2>
-    <p>Camera integration will be added later.</p>
+<div class="card">
+    <h2>Scan House</h2>
+
+    <p>Today's Collection Count: {{ count }}</p>
+
+    {% if message %}
+        <div class="msg">{{ message }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="house_code" placeholder="Enter House QR Code" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    <br>
+    <a href="{% url 'worker_dashboard' %}">
+        <button>Back to Dashboard</button>
+    </a>
+
 </div>
 
 </body>

@@ -1,5 +1,6 @@
 
 from waste.models import Collection
+from waste.models import Ward
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -41,16 +42,9 @@ def worker_dashboard(request):
     if not request.user.groups.filter(name="Worker").exists():
         return HttpResponseForbidden("Access denied")
 
-    house_data = {
-        "Ward 1": {"houses": 100, "amount": 500},
-        "Ward 2": {"houses": 80, "amount": 400},
-        "Ward 3": {"houses": 120, "amount": 600},
-    }
-
     # If ward selected from dropdown
     if request.method == "POST" and request.POST.get("ward"):
-        selected_ward = request.POST.get("ward")
-        request.session["ward"] = selected_ward
+        request.session["ward"] = request.POST.get("ward")
         return redirect("worker_dashboard")
 
     # If change ward button pressed
@@ -61,21 +55,27 @@ def worker_dashboard(request):
     selected_ward = request.session.get("ward")
 
     if selected_ward:
-        today_key = f"collection_{selected_ward}_{now().date()}"
-        collected = request.session.get(today_key, [])
+        try:
+            ward_obj = Ward.objects.get(name=selected_ward)
+        except Ward.DoesNotExist:
+            request.session.pop("ward", None)
+            return redirect("worker_dashboard")
 
-        total_houses = house_data[selected_ward]["houses"]
-        total_amount = house_data[selected_ward]["amount"]
+        total_houses = ward_obj.total_houses
+        total_amount = ward_obj.total_amount
 
         collected_count = Collection.objects.filter(
-        worker=request.user,
-        ward=selected_ward,
-        date=now().date()).count()
+            worker=request.user,
+            ward=selected_ward,
+            date=now().date()
+        ).count()
+
         remaining_houses = total_houses - collected_count
-        progress_percent = (collected_count / total_houses) * 100 if total_houses > 0 else 0
-        per_house_amount = total_amount / total_houses
-        collected_amount = collected_count * per_house_amount
-        remaining_amount = total_amount - collected_amount
+
+        per_house_amount = total_amount / total_houses if total_houses > 0 else 0
+        collected_amount = round(collected_count * per_house_amount, 2)
+        remaining_amount = round(total_amount - collected_amount, 2)
+
         progress_percent = (collected_count / total_houses) * 100 if total_houses > 0 else 0
 
         return render(request, "accounts/worker_dashboard.html", {
@@ -87,7 +87,6 @@ def worker_dashboard(request):
             "collected_amount": collected_amount,
             "remaining_amount": remaining_amount,
             "progress_percent": progress_percent,
-            
         })
 
     return render(request, "accounts/worker_dashboard.html")

@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Collection
+from .models import Ward, Collection
+
+@admin.register(Ward)
+class WardAdmin(admin.ModelAdmin):
+    list_display = ('name', 'total_houses', 'rate_per_house')
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
